@@ -306,9 +306,27 @@ function App() {
     return () => window.clearInterval(timer);
   }, [phrases.length]);
 
+  useEffect(() => {
+    let frame = 0;
+    const updateCamera = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const progress = window.scrollY / maxScroll;
+        document.documentElement.style.setProperty("--scroll-progress", progress.toFixed(3));
+        document.documentElement.style.setProperty("--scroll-y", `${window.scrollY}px`);
+      });
+    };
+    window.addEventListener("scroll", updateCamera, { passive: true });
+    updateCamera();
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", updateCamera); };
+  }, []);
+
   return (
     <div className="site-shell">
       {!bootComplete && <BootSequence onComplete={finishBoot} />}
+      <CinematicAtmosphere />
+      <SceneRail />
       <HudCursor label={hudLabel} />
       <div className="noise" aria-hidden="true" />
       <div className="cursor-orb" aria-hidden="true" />
@@ -428,3 +446,26 @@ function App() {
 }
 
 export default App;
+const cinematicParticles = Array.from({ length: 34 }, (_, index) => ({
+  id: index,
+  left: `${(index * 31.7) % 100}%`,
+  top: `${(index * 47.3) % 100}%`,
+  delay: `${(index % 9) * 0.42}s`,
+  duration: `${6 + (index % 7)}s`,
+  size: `${index % 4 === 0 ? 3 : 1 + (index % 2)}px`,
+}));
+
+function CinematicAtmosphere() {
+  return (
+    <div className="cinematic-atmosphere" aria-hidden="true">
+      <div className="atmosphere-beam beam-left" /><div className="atmosphere-beam beam-right" />
+      <div className="particle-field">{cinematicParticles.map((particle) => <i key={particle.id} style={{ left: particle.left, top: particle.top, width: particle.size, height: particle.size, animationDelay: particle.delay, animationDuration: particle.duration }} />)}</div>
+      <div className="cinematic-vignette" />
+    </div>
+  );
+}
+
+function SceneRail() {
+  const scenes = [["01", "ORIGIN", "home"], ["02", "IDENTITY", "about"], ["03", "FOCUS", "focus"], ["04", "ARTIFACTS", "projects"], ["05", "CYBER LAB", "lab"], ["06", "SIGNAL", "contact"]];
+  return <aside className="scene-rail" aria-label="Cinematic scene navigation">{scenes.map(([number, label, id]) => <button key={id} onClick={() => scrollToSection(id)}><span>{number}</span><i /><small>{label}</small></button>)}</aside>;
+}
