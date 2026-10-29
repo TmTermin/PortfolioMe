@@ -48,7 +48,8 @@ const navItems = [
   ["01", "About", "about"],
   ["02", "Focus", "focus"],
   ["03", "Projects", "projects"],
-  ["04", "Contact", "contact"],
+  ["04", "Cyber Lab", "lab"],
+  ["05", "Contact", "contact"],
 ];
 
 function scrollToSection(id) {
@@ -111,6 +112,95 @@ function HudCursor({ label }) {
   }, []);
 
   return <div className={`hud-cursor ${label ? "is-active" : ""}`} style={{ left: position.x, top: position.y }} aria-hidden="true"><span className="hud-crosshair" /><small>{label || "SCANNING"}</small><b>X {String(Math.max(0, Math.round(position.x))).padStart(3, "0")} / Y {String(Math.max(0, Math.round(position.y))).padStart(3, "0")}</b></div>;
+}
+
+function CyberLab() {
+  const [attackRunning, setAttackRunning] = useState(false);
+  const [scanRunning, setScanRunning] = useState(false);
+  const [terminalInput, setTerminalInput] = useState("");
+  const [terminalOutput, setTerminalOutput] = useState("Type help to inspect the available commands.");
+  const [password, setPassword] = useState("");
+
+  const runAttack = () => {
+    setAttackRunning(false);
+    window.setTimeout(() => setAttackRunning(true), 30);
+    window.setTimeout(() => setAttackRunning(false), 2600);
+  };
+
+  const runScan = () => {
+    setScanRunning(true);
+    window.setTimeout(() => setScanRunning(false), 2600);
+  };
+
+  const runCommand = (event) => {
+    event.preventDefault();
+    const command = terminalInput.trim().toLowerCase();
+    const responses = {
+      help: "commands: about · skills · projects · clear · contact",
+      about: "TmTermin // cybersecurity student // year 01",
+      skills: "linux 76% · web 82% · security 64% · problem solving 88%",
+      projects: "PortfolioMe · Security Notes · Linux Notes",
+      contact: "signal open // email channel ready",
+      clear: "",
+    };
+    setTerminalOutput(responses[command] ?? `command not found: ${command || "_"}`);
+    setTerminalInput("");
+  };
+
+  const passwordScore = password.length === 0 ? 0 : Math.min(100, password.length * 7 + (/[A-Z]/.test(password) ? 18 : 0) + (/[^a-zA-Z0-9]/.test(password) ? 20 : 0));
+  const passwordLabel = passwordScore > 78 ? "STRONG" : passwordScore > 46 ? "MEDIUM" : "WEAK";
+
+  return (
+    <div className="lab-grid">
+      <div className="lab-panel network-panel">
+        <div className="lab-panel-head"><span>01 / NETWORK TOPOLOGY</span><b>3D SYSTEM MAP</b></div>
+        <div className="network-stage">
+          <div className="network-core">FIREWALL</div>
+          <span className="network-node node-client">CLIENT</span><span className="network-node node-server">SERVER</span><span className="network-node node-db">DATABASE</span><span className="network-node node-gateway">GATEWAY</span>
+          <i className="network-line line-a" /><i className="network-line line-b" /><i className="network-line line-c" /><i className="network-line line-d" />
+          {attackRunning && <span className="attack-packet">!</span>}
+        </div>
+        <div className="lab-panel-foot"><span className={attackRunning ? "danger-text" : "success-text"}>{attackRunning ? "THREAT INTERCEPTED" : "NETWORK INTEGRITY 98%"}</span><button className="mini-button" onClick={runAttack}>{attackRunning ? "BLOCKING..." : "SIMULATE ATTACK"}</button></div>
+      </div>
+
+      <div className="lab-panel shield-panel">
+        <div className="lab-panel-head"><span>02 / 3D DEFENSE</span><b>SECURITY SHIELD</b></div>
+        <div className="shield-stage"><div className="shield-3d"><span>SECURE</span><i /></div><div className="shield-orbit orbit-a" /><div className="shield-orbit orbit-b" /></div>
+        <div className="lab-panel-foot"><span className="success-text">PROTOCOL ACTIVE</span><small>hover to rotate</small></div>
+      </div>
+
+      <div className="lab-panel scanner-panel">
+        <div className="lab-panel-head"><span>03 / VULNERABILITY SCAN</span><b>EDUCATIONAL DEMO</b></div>
+        <div className="scanner-output"><p><span>$</span> scan --target portfolio-me</p><p>{scanRunning ? "scanning ports..." : "target: portfolio-me"}</p><p>PORT 22 <b>CLOSED</b></p><p>PORT 80 <b>OPEN</b></p><p>PORT 443 <strong>OPEN / SECURE</strong></p><p className="success-text">result: LOW RISK</p></div>
+        <button className="scan-button" onClick={runScan}>{scanRunning ? "SCANNING..." : "RUN SAFE SCAN"}<span>↗</span></button>
+      </div>
+
+      <div className="lab-panel cube-panel">
+        <div className="lab-panel-head"><span>04 / SKILL MATRIX</span><b>ROTATE THE CUBE</b></div>
+        <div className="cube-stage"><div className="cube-3d"><span className="cube-face face-front">LINUX</span><span className="cube-face face-back">PYTHON</span><span className="cube-face face-right">NETWORK</span><span className="cube-face face-left">WEB SEC</span><span className="cube-face face-top">RESEARCH</span><span className="cube-face face-bottom">BUILD</span></div></div>
+      </div>
+
+      <div className="lab-panel terminal-lab">
+        <div className="lab-panel-head"><span>05 / INTERACTIVE TERMINAL</span><b>SAFE LOCAL LAB</b></div>
+        <div className="lab-terminal-body"><p><span className="prompt">$</span> help</p><p className="terminal-result">{terminalOutput}</p><form onSubmit={runCommand}><span className="prompt">$</span><input value={terminalInput} onChange={(event) => setTerminalInput(event.target.value)} aria-label="Terminal command" placeholder="type a command..." /></form></div>
+      </div>
+
+      <div className="lab-panel dashboard-panel">
+        <div className="lab-panel-head"><span>06 / SYSTEM DASHBOARD</span><b>LIVE SIMULATION</b></div>
+        <div className="dashboard-stats"><div><small>FIREWALL</small><strong>ACTIVE</strong></div><div><small>THREAT LEVEL</small><strong>LOW</strong></div><div><small>INTEGRITY</small><strong>98%</strong></div><div><small>LAST SCAN</small><strong>NOW</strong></div></div><div className="digital-rain" aria-hidden="true">0101 1100 0110 1010 0011 0101 1101</div>
+      </div>
+
+      <div className="lab-panel password-panel">
+        <div className="lab-panel-head"><span>07 / PASSWORD LAB</span><b>NO DATA LEAVES YOUR BROWSER</b></div>
+        <label className="password-input"><span>$ test-password</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="enter a demo password" /></label><div className="password-meter"><i style={{ "--password-score": `${passwordScore}%` }} /></div><div className="password-meta"><span>ENTROPY / {password.length ? `${passwordScore}%` : "—"}</span><strong className={passwordScore > 78 ? "success-text" : passwordScore > 46 ? "warning-text" : "danger-text"}>{password.length ? passwordLabel : "WAITING"}</strong></div>
+      </div>
+
+      <div className="lab-panel timeline-panel">
+        <div className="lab-panel-head"><span>08 / LEARNING TIMELINE</span><b>PROGRESS LOG</b></div>
+        <div className="learning-timeline"><div><span>2025</span><p>Linux fundamentals initialized</p></div><div><span>2025</span><p>Python basics installed</p></div><div><span>2026</span><p>Security notes started</p></div><div><span>NEXT</span><p>Web security lab loading...</p></div></div>
+      </div>
+    </div>
+  );
 }
 
 function Reveal({ children, className = "", delay = 0 }) {
@@ -263,8 +353,16 @@ function App() {
           </section>
         </Reveal>
 
+        <Reveal className="section lab-section" delay={180}>
+          <section id="lab" className="section-inner">
+            <div className="section-heading"><div className="section-index">04 / CYBER LAB</div><div><p className="eyebrow">INTERACTIVE SECURITY SYSTEMS</p><h2>Explore the <span>surface.</span></h2></div><span className="heading-count">08 MODULES</span></div>
+            <p className="section-intro lab-intro">A safe, visual playground for understanding networks, defense layers, and the tools I am learning.</p>
+            <CyberLab />
+          </section>
+        </Reveal>
+
         <Reveal className="section contact-section" delay={200}>
-          <section id="contact" className="section-inner contact-inner"><div className="contact-signal"><span>04</span><i /><small>CONTACT / SIGNAL</small></div><div><p className="eyebrow">OPEN CHANNEL</p><h2>Let&apos;s make the<br /><span>web safer.</span></h2><p className="section-intro">Always open to learning from people who care about technology, security, and thoughtful digital work.</p><a className="button button-primary" href="mailto:contact@example.com">Start a conversation <span>↗</span></a></div><div className="contact-orbit"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><span>AJ</span></div></section>
+          <section id="contact" className="section-inner contact-inner"><div className="contact-signal"><span>05</span><i /><small>CONTACT / SIGNAL</small></div><div><p className="eyebrow">OPEN CHANNEL</p><h2>Let&apos;s make the<br /><span>web safer.</span></h2><p className="section-intro">Always open to learning from people who care about technology, security, and thoughtful digital work.</p><a className="button button-primary" href="mailto:contact@example.com">Start a conversation <span>↗</span></a></div><div className="contact-orbit"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><span>AJ</span></div></section>
         </Reveal>
       </main>
 
