@@ -104,3 +104,18 @@ footer { border-top: 1px solid var(--line); display: flex; justify-content: spac
   .project-card { transform: none !important; }
   .lab-panel:hover { border-color: var(--line); }
 }
+
+/* Touch interaction layer */
+.network-stage { cursor: grab; touch-action: none; transition: transform .18s ease-out; }.network-stage:active { cursor: grabbing; }.network-node { background: rgba(7,13,16,.9); cursor: pointer; }.network-node:active { background: rgba(131,246,213,.2); color: var(--cyan); }.network-selection { bottom: .2rem; color: var(--muted); font: .5rem 'DM Mono', monospace; left: 50%; position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.quick-commands { display: flex; flex-wrap: wrap; gap: .35rem; margin: .7rem 0; }.quick-commands button { background: rgba(131,246,213,.05); border: 1px solid rgba(131,246,213,.25); color: var(--cyan); cursor: pointer; font: .55rem 'DM Mono', monospace; min-height: 2rem; padding: .35rem .55rem; }.quick-commands button:active { background: rgba(131,246,213,.2); transform: scale(.96); }
+@media (max-width: 650px) {
+  .projects-section .project-grid { display: flex; gap: .8rem; margin-right: -8vw; overflow-x: auto; overscroll-behavior-x: contain; padding: .2rem 8vw .9rem 0; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; }
+  .projects-section .project-grid::-webkit-scrollbar { display: none; }
+  .projects-section .project-card { flex: 0 0 86%; margin: 0; min-height: 28rem; scroll-snap-align: center; }
+  .projects-section .project-card.touch-active { border-color: var(--cyan); box-shadow: 0 0 2rem rgba(131,246,213,.16); }
+  .projects-section .project-card.touch-active .project-terminal { animation: terminal-in .3s ease both; display: block; }
+  .projects-section .project-card:active { transform: scale(.985) !important; }
+  .network-stage { touch-action: none; }
+  .network-selection { bottom: -.3rem; font-size: .44rem; }
+  .quick-commands { flex-wrap: nowrap; margin-right: -1rem; overflow-x: auto; padding-bottom: .3rem; scrollbar-width: none; }.quick-commands::-webkit-scrollbar { display: none; }.quick-commands button { flex: 0 0 auto; min-height: 2.4rem; padding: .5rem .7rem; }
+}

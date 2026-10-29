@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const projects = [
@@ -79,6 +79,10 @@ function playCyberSound(kind = "click") {
   oscillator.addEventListener("ended", () => context.close(), { once: true });
 }
 
+function haptic(pattern = 18) {
+  if (typeof navigator !== "undefined") navigator.vibrate?.(pattern);
+}
+
 function BootSequence({ onComplete }) {
   const [lineCount, setLineCount] = useState(0);
   const bootLines = [
@@ -143,23 +147,27 @@ function CyberLab({ sound }) {
   const [terminalInput, setTerminalInput] = useState("");
   const [terminalOutput, setTerminalOutput] = useState("Type help to inspect the available commands.");
   const [password, setPassword] = useState("");
+  const [networkRotation, setNetworkRotation] = useState({ x: 0, y: 0 });
+  const [selectedNode, setSelectedNode] = useState("FIREWALL");
+  const dragStart = useRef({ x: 0, y: 0 });
 
   const runAttack = () => {
     setAttackRunning(false);
     sound("alert");
+    haptic([18, 30, 18]);
     window.setTimeout(() => setAttackRunning(true), 30);
     window.setTimeout(() => setAttackRunning(false), 2600);
   };
 
   const runScan = () => {
     sound("success");
+    haptic(24);
     setScanRunning(true);
     window.setTimeout(() => setScanRunning(false), 2600);
   };
 
-  const runCommand = (event) => {
-    event.preventDefault();
-    const command = terminalInput.trim().toLowerCase();
+  const executeCommand = (rawCommand) => {
+    const command = rawCommand.trim().toLowerCase();
     const responses = {
       help: "commands: about · skills · projects · clear · contact",
       about: "TmTermin // cybersecurity student // year 01",
@@ -169,8 +177,25 @@ function CyberLab({ sound }) {
       clear: "",
     };
     sound(responses[command] ? "click" : "alert");
+    haptic(responses[command] ? 12 : [10, 30, 10]);
     setTerminalOutput(responses[command] ?? `command not found: ${command || "_"}`);
     setTerminalInput("");
+  };
+
+  const runCommand = (event) => {
+    event.preventDefault();
+    executeCommand(terminalInput);
+  };
+
+  const startNetworkDrag = (event) => {
+    dragStart.current.x = event.clientX;
+    dragStart.current.y = event.clientY;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const moveNetwork = (event) => {
+    if (!event.currentTarget.hasPointerCapture?.(event.pointerId)) return;
+    setNetworkRotation({ x: Math.max(-12, Math.min(12, (event.clientY - dragStart.current.y) * -0.12)), y: Math.max(-18, Math.min(18, (event.clientX - dragStart.current.x) * 0.12)) });
   };
 
   const passwordScore = password.length === 0 ? 0 : Math.min(100, password.length * 7 + (/[A-Z]/.test(password) ? 18 : 0) + (/[^a-zA-Z0-9]/.test(password) ? 20 : 0));
@@ -180,11 +205,12 @@ function CyberLab({ sound }) {
     <div className="lab-grid">
       <div className="lab-panel network-panel">
         <div className="lab-panel-head"><span>01 / NETWORK TOPOLOGY</span><b>3D SYSTEM MAP</b></div>
-        <div className="network-stage">
+        <div className="network-stage" onPointerDown={startNetworkDrag} onPointerMove={moveNetwork} style={{ transform: `rotateX(${16 + networkRotation.x}deg) rotateZ(${-2 + networkRotation.y / 8}deg)` }}>
           <div className="network-core">FIREWALL</div>
-          <span className="network-node node-client">CLIENT</span><span className="network-node node-server">SERVER</span><span className="network-node node-db">DATABASE</span><span className="network-node node-gateway">GATEWAY</span>
+          <button className="network-node node-client" onClick={() => { setSelectedNode("CLIENT"); haptic(12); }}>CLIENT</button><button className="network-node node-server" onClick={() => { setSelectedNode("SERVER"); haptic(12); }}>SERVER</button><button className="network-node node-db" onClick={() => { setSelectedNode("DATABASE"); haptic(12); }}>DATABASE</button><button className="network-node node-gateway" onClick={() => { setSelectedNode("GATEWAY"); haptic(12); }}>GATEWAY</button>
           <i className="network-line line-a" /><i className="network-line line-b" /><i className="network-line line-c" /><i className="network-line line-d" />
           {attackRunning && <span className="attack-packet">!</span>}
+          <small className="network-selection">NODE / {selectedNode} · DRAG TO ROTATE</small>
         </div>
         <div className="lab-panel-foot"><span className={attackRunning ? "danger-text" : "success-text"}>{attackRunning ? "THREAT INTERCEPTED" : "NETWORK INTEGRITY 98%"}</span><button className="mini-button" onClick={runAttack}>{attackRunning ? "BLOCKING..." : "SIMULATE ATTACK"}</button></div>
       </div>
@@ -208,7 +234,7 @@ function CyberLab({ sound }) {
 
       <div className="lab-panel terminal-lab">
         <div className="lab-panel-head"><span>05 / INTERACTIVE TERMINAL</span><b>SAFE LOCAL LAB</b></div>
-        <div className="lab-terminal-body"><p><span className="prompt">$</span> help</p><p className="terminal-result">{terminalOutput}</p><form onSubmit={runCommand}><span className="prompt">$</span><input value={terminalInput} onChange={(event) => setTerminalInput(event.target.value)} aria-label="Terminal command" placeholder="type a command..." /></form></div>
+        <div className="lab-terminal-body"><p><span className="prompt">$</span> help</p><p className="terminal-result">{terminalOutput}</p><div className="quick-commands">{["help", "about", "skills", "projects", "contact"].map((command) => <button type="button" key={command} onClick={() => executeCommand(command)}>{command}</button>)}</div><form onSubmit={runCommand}><span className="prompt">$</span><input value={terminalInput} onChange={(event) => setTerminalInput(event.target.value)} aria-label="Terminal command" placeholder="type a command..." /></form></div>
       </div>
 
       <div className="lab-panel dashboard-panel">
@@ -264,6 +290,7 @@ function App() {
   const [bootComplete, setBootComplete] = useState(false);
   const [hudLabel, setHudLabel] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [activeProject, setActiveProject] = useState(null);
   const finishBoot = useCallback(() => setBootComplete(true), []);
   const sound = useCallback((kind) => { if (soundEnabled) playCyberSound(kind); }, [soundEnabled]);
   const [typed, setTyped] = useState(0);
@@ -378,7 +405,7 @@ function App() {
         <Reveal className="section projects-section" delay={150}>
           <section id="projects" className="section-inner">
             <div className="section-heading"><div className="section-index">03 / PROJECTS</div><div><p className="eyebrow">SELECTED LEARNING ARTIFACTS</p><h2>Built while <span>becoming.</span></h2></div><span className="heading-count">03 / 03</span></div>
-            <div className="project-grid">{projects.map((project, index) => <a className={`project-card ${project.accent}`} href={project.link} target="_blank" rel="noreferrer" key={project.title} onMouseEnter={() => setHudLabel(`OPEN ${project.title.toUpperCase()}`)} onMouseLeave={() => setHudLabel("")}><div className="project-card-top"><span>{project.number}</span><span>{project.type}</span><b>↗</b></div><div className="project-visual"><span className="visual-bracket">[</span><strong>{index === 0 ? "{ }" : index === 1 ? "⌁" : ">_"}</strong><span className="visual-bracket">]</span><i /></div><div className="project-terminal">{project.terminal.map((line, lineIndex) => <p key={line}><span>{lineIndex === 0 ? "$" : "›"}</span> {line}</p>)}</div><h3>{project.title}</h3><p>{project.description}</p><div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></a>)}</div>
+            <div className="project-grid">{projects.map((project, index) => <a className={`project-card ${project.accent} ${activeProject === project.title ? "touch-active" : ""}`} href={project.link} target="_blank" rel="noreferrer" key={project.title} onClick={(event) => { if (window.matchMedia("(hover: none)").matches && activeProject !== project.title) { event.preventDefault(); setActiveProject(project.title); sound("click"); haptic(12); } }} onMouseEnter={() => setHudLabel(`OPEN ${project.title.toUpperCase()}`)} onMouseLeave={() => setHudLabel("")}><div className="project-card-top"><span>{project.number}</span><span>{project.type}</span><b>↗</b></div><div className="project-visual"><span className="visual-bracket">[</span><strong>{index === 0 ? "{ }" : index === 1 ? "⌁" : ">_"}</strong><span className="visual-bracket">]</span><i /></div><div className="project-terminal">{project.terminal.map((line, lineIndex) => <p key={line}><span>{lineIndex === 0 ? "$" : "›"}</span> {line}</p>)}</div><h3>{project.title}</h3><p>{project.description}</p><div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></a>)}</div>
           </section>
         </Reveal>
 
