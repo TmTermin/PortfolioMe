@@ -83,7 +83,18 @@ function haptic(pattern = 18) {
   if (typeof navigator !== "undefined") navigator.vibrate?.(pattern);
 }
 
-function BootSequence({ onComplete }) {
+function speakCyberGreeting() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const greeting = new SpeechSynthesisUtterance("Salom. Cyberspace portfolio tizimiga xush kelibsiz. Men TmTermin, kiberxavfsizlik yo'nalishida birinchi kurs talabasiman. Terminalni oching va buyruq yozib ko'ring.");
+  greeting.lang = "uz-UZ";
+  greeting.rate = 0.92;
+  greeting.pitch = 0.78;
+  greeting.volume = 0.9;
+  window.speechSynthesis.speak(greeting);
+}
+
+function BootSequence({ onComplete, onVoice }) {
   const [lineCount, setLineCount] = useState(0);
   const bootLines = [
     "[ OK ] Loading security modules",
@@ -117,6 +128,7 @@ function BootSequence({ onComplete }) {
         </div>
         <div className="boot-progress"><i style={{ "--boot-progress": `${Math.min(100, lineCount * 25)}%` }} /></div>
         <small className="boot-hint">SECURE CONNECTION / HANDSHAKE IN PROGRESS</small>
+        <button className="boot-enter" onClick={() => { onVoice(); onComplete(); }}>ENTER CYBERSPACE / PLAY GREETING <span>↗</span></button>
       </div>
     </div>
   );
@@ -141,7 +153,7 @@ function HudCursor({ label }) {
   return <div className={`hud-cursor ${label ? "is-active" : ""}`} style={{ left: position.x, top: position.y }} aria-hidden="true"><span className="hud-crosshair" /><small>{label || "SCANNING"}</small><b>X {String(Math.max(0, Math.round(position.x))).padStart(3, "0")} / Y {String(Math.max(0, Math.round(position.y))).padStart(3, "0")}</b></div>;
 }
 
-function CyberLab({ sound }) {
+function CyberLab({ sound, onVoice }) {
   const [attackRunning, setAttackRunning] = useState(false);
   const [scanRunning, setScanRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
@@ -169,13 +181,17 @@ function CyberLab({ sound }) {
   const executeCommand = (rawCommand) => {
     const command = rawCommand.trim().toLowerCase();
     const responses = {
-      help: "commands: about · skills · projects · clear · contact",
+      help: "commands: about · skills · projects · status · scan · voice · lab · clear · contact",
       about: "TmTermin // cybersecurity student // year 01",
       skills: "linux 76% · web 82% · security 64% · problem solving 88%",
       projects: "PortfolioMe · Security Notes · Linux Notes",
+      status: "firewall: active // threat: low // integrity: 98%",
+      scan: "safe educational scan queued // use the SCAN button for visual feedback",
+      lab: "cyber lab: network · shield · scanner · terminal online",
       contact: "signal open // email channel ready",
       clear: "",
     };
+    if (command === "voice" || command === "greet") { onVoice(); setTerminalOutput("voice channel open // greeting transmitted"); setTerminalInput(""); sound("success"); haptic(20); return; }
     sound(responses[command] ? "click" : "alert");
     haptic(responses[command] ? 12 : [10, 30, 10]);
     setTerminalOutput(responses[command] ?? `command not found: ${command || "_"}`);
@@ -291,7 +307,8 @@ function App() {
   const [hudLabel, setHudLabel] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activeProject, setActiveProject] = useState(null);
-  const finishBoot = useCallback(() => setBootComplete(true), []);
+  const voiceGreeting = useCallback(() => { speakCyberGreeting(); }, []);
+  const finishBoot = useCallback(() => { setBootComplete(true); window.setTimeout(voiceGreeting, 120); }, [voiceGreeting]);
   const sound = useCallback((kind) => { if (soundEnabled) playCyberSound(kind); }, [soundEnabled]);
   const [typed, setTyped] = useState(0);
   const phrases = useMemo(
@@ -324,7 +341,7 @@ function App() {
 
   return (
     <div className="site-shell">
-      {!bootComplete && <BootSequence onComplete={finishBoot} />}
+      {!bootComplete && <BootSequence onComplete={finishBoot} onVoice={voiceGreeting} />}
       <CinematicAtmosphere />
       <SceneRail />
       <HudCursor label={hudLabel} />
@@ -338,6 +355,7 @@ function App() {
         </button>
         <div className="availability"><i /> AVAILABLE TO LEARN / BUILD</div>
         <button className="audio-toggle" onClick={() => { setSoundEnabled((enabled) => !enabled); if (!soundEnabled) playCyberSound("success"); }} aria-pressed={soundEnabled}>{soundEnabled ? "SOUND / ON" : "SOUND / OFF"}</button>
+        <button className="voice-toggle" onClick={() => { voiceGreeting(); sound("success"); }} aria-label="Play voice greeting">VOICE / GREET</button>
         <button className="menu-toggle" onClick={() => { sound("click"); setMenuOpen((open) => !open); }} aria-expanded={menuOpen}>
           {menuOpen ? "CLOSE" : "MENU"}<span className="menu-lines" />
         </button>
@@ -431,7 +449,7 @@ function App() {
           <section id="lab" className="section-inner">
             <div className="section-heading"><div className="section-index">04 / CYBER LAB</div><div><p className="eyebrow">INTERACTIVE SECURITY SYSTEMS</p><h2>Explore the <span>surface.</span></h2></div><span className="heading-count">08 MODULES</span></div>
             <p className="section-intro lab-intro">A safe, visual playground for understanding networks, defense layers, and the tools I am learning.</p>
-            <CyberLab sound={sound} />
+            <CyberLab sound={sound} onVoice={voiceGreeting} />
           </section>
         </Reveal>
 
