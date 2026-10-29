@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const projects = [
@@ -11,6 +11,7 @@ const projects = [
     tags: ["React", "Vite", "UI motion"],
     link: "https://github.com/TmTermin/PortfolioMe",
     accent: "cyan",
+    terminal: ["inspect portfolio-me", "status: online", "stack: react / vite"],
   },
   {
     number: "02",
@@ -21,6 +22,7 @@ const projects = [
     tags: ["Cybersecurity", "Research", "Documentation"],
     link: "https://github.com/TmTermin/security-notes",
     accent: "violet",
+    terminal: ["scan security-notes", "topic: threat awareness", "access: public"],
   },
   {
     number: "03",
@@ -31,6 +33,7 @@ const projects = [
     tags: ["Linux", "CLI", "Systems"],
     link: "https://github.com/TmTermin/linux-notes",
     accent: "green",
+    terminal: ["open linux-notes", "mode: command line", "signal: stable"],
   },
 ];
 
@@ -50,6 +53,64 @@ const navItems = [
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function BootSequence({ onComplete }) {
+  const [lineCount, setLineCount] = useState(0);
+  const bootLines = [
+    "[ OK ] Loading security modules",
+    "[ OK ] Checking network integrity",
+    "[ OK ] Firewall protocol active",
+    "[ OK ] Portfolio system ready",
+  ];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLineCount((current) => {
+        if (current >= bootLines.length) {
+          window.clearInterval(timer);
+          window.setTimeout(onComplete, 380);
+          return current;
+        }
+        return current + 1;
+      });
+    }, 330);
+    return () => window.clearInterval(timer);
+  }, [bootLines.length, onComplete]);
+
+  return (
+    <div className="boot-screen" role="status" aria-live="polite">
+      <div className="boot-inner">
+        <div className="boot-brand"><span>&lt;/&gt;</span><b>TMTERMIN_OS</b><small>v.01.26</small></div>
+        <div className="boot-terminal">
+          <p><span className="prompt">$</span> ./initialize-portfolio.sh</p>
+          {bootLines.slice(0, lineCount).map((line) => <p className={line.includes("active") || line.includes("ready") ? "boot-success" : ""} key={line}>{line}</p>)}
+          <span className="boot-cursor" />
+        </div>
+        <div className="boot-progress"><i style={{ "--boot-progress": `${Math.min(100, lineCount * 25)}%` }} /></div>
+        <small className="boot-hint">SECURE CONNECTION / HANDSHAKE IN PROGRESS</small>
+      </div>
+    </div>
+  );
+}
+
+function HudCursor({ label }) {
+  const [position, setPosition] = useState({ x: -100, y: -100 });
+
+  useEffect(() => {
+    let frame = 0;
+    const handleMove = (event) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setPosition({ x: event.clientX, y: event.clientY }));
+    };
+    window.addEventListener("pointermove", handleMove, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", handleMove);
+    };
+  }, []);
+
+  return <div className={`hud-cursor ${label ? "is-active" : ""}`} style={{ left: position.x, top: position.y }} aria-hidden="true"><span className="hud-crosshair" /><small>{label || "SCANNING"}</small><b>X {String(Math.max(0, Math.round(position.x))).padStart(3, "0")} / Y {String(Math.max(0, Math.round(position.y))).padStart(3, "0")}</b></div>;
 }
 
 function Reveal({ children, className = "", delay = 0 }) {
@@ -84,6 +145,9 @@ function Reveal({ children, className = "", delay = 0 }) {
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bootComplete, setBootComplete] = useState(false);
+  const [hudLabel, setHudLabel] = useState("");
+  const finishBoot = useCallback(() => setBootComplete(true), []);
   const [typed, setTyped] = useState(0);
   const phrases = useMemo(
     () => ["learning the craft", "securing the surface", "building with intent"],
@@ -99,6 +163,8 @@ function App() {
 
   return (
     <div className="site-shell">
+      {!bootComplete && <BootSequence onComplete={finishBoot} />}
+      <HudCursor label={hudLabel} />
       <div className="noise" aria-hidden="true" />
       <div className="cursor-orb" aria-hidden="true" />
 
@@ -143,7 +209,7 @@ function App() {
             </div>
           </div>
 
-          <div className="hero-terminal" aria-label="Live terminal status">
+          <div className="hero-terminal" aria-label="Live terminal status" onMouseEnter={() => setHudLabel("LIVE TERMINAL")} onMouseLeave={() => setHudLabel("")}>
             <div className="terminal-head"><span><i /><i /><i /></span><small>student@cyberspace:~</small><b>⌁</b></div>
             <div className="terminal-body">
               <p><span className="prompt">$</span> whoami</p>
@@ -153,6 +219,13 @@ function App() {
               <p><span className="prompt">$</span> ./keep-going.sh</p>
               <p className="terminal-result success">[OK] progress detected</p>
             </div>
+          </div>
+
+          <div className="cyber-radar" aria-label="Cybersecurity radar">
+            <div className="radar-ring ring-one" /><div className="radar-ring ring-two" /><div className="radar-sweep" />
+            <span className="radar-dot dot-a" /><span className="radar-dot dot-b" /><span className="radar-dot dot-c" />
+            <div className="radar-label label-top">PORT 443 / SECURE</div><div className="radar-label label-bottom">THREAT LEVEL / LOW</div>
+            <strong>NET<br />SCAN</strong>
           </div>
 
           <button className="scroll-cue" onClick={() => scrollToSection("about")}><span>SCROLL TO EXPLORE</span><i>↓</i></button>
@@ -186,7 +259,7 @@ function App() {
         <Reveal className="section projects-section" delay={150}>
           <section id="projects" className="section-inner">
             <div className="section-heading"><div className="section-index">03 / PROJECTS</div><div><p className="eyebrow">SELECTED LEARNING ARTIFACTS</p><h2>Built while <span>becoming.</span></h2></div><span className="heading-count">03 / 03</span></div>
-            <div className="project-grid">{projects.map((project, index) => <a className={`project-card ${project.accent}`} href={project.link} target="_blank" rel="noreferrer" key={project.title}><div className="project-card-top"><span>{project.number}</span><span>{project.type}</span><b>↗</b></div><div className="project-visual"><span className="visual-bracket">[</span><strong>{index === 0 ? "{ }" : index === 1 ? "⌁" : ">_"}</strong><span className="visual-bracket">]</span><i /></div><h3>{project.title}</h3><p>{project.description}</p><div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></a>)}</div>
+            <div className="project-grid">{projects.map((project, index) => <a className={`project-card ${project.accent}`} href={project.link} target="_blank" rel="noreferrer" key={project.title} onMouseEnter={() => setHudLabel(`OPEN ${project.title.toUpperCase()}`)} onMouseLeave={() => setHudLabel("")}><div className="project-card-top"><span>{project.number}</span><span>{project.type}</span><b>↗</b></div><div className="project-visual"><span className="visual-bracket">[</span><strong>{index === 0 ? "{ }" : index === 1 ? "⌁" : ">_"}</strong><span className="visual-bracket">]</span><i /></div><div className="project-terminal">{project.terminal.map((line, lineIndex) => <p key={line}><span>{lineIndex === 0 ? "$" : "›"}</span> {line}</p>)}</div><h3>{project.title}</h3><p>{project.description}</p><div className="tag-row">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></a>)}</div>
           </section>
         </Reveal>
 
