@@ -84,3 +84,23 @@ footer { border-top: 1px solid var(--line); display: flex; justify-content: spac
 @keyframes packet-run { 0% { left: 10%; top: 28%; } 48% { left: 48%; top: 47%; } 100% { left: 56%; top: 52%; opacity: 0; } } @keyframes cube-spin { to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); } } @keyframes rain-shift { 50% { transform: translateX(1.5rem); opacity: .7; } }
 @media (max-width: 850px) { .lab-intro { margin-left: 0; }.network-panel, .shield-panel, .scanner-panel, .cube-panel, .terminal-lab, .dashboard-panel, .password-panel { grid-column: span 6; }.timeline-panel { grid-column: span 12; } }
 @media (max-width: 650px) { .lab-grid { display: block; }.lab-panel { margin-bottom: 1rem; }.network-stage { transform: scale(.86) rotateX(12deg); }.dashboard-stats { gap: .4rem; }.dashboard-stats div { padding-left: .35rem; }.dashboard-stats small { font-size: .43rem; }.dashboard-stats strong { font-size: .62rem; }.learning-timeline { gap: 1rem; grid-template-columns: 1fr 1fr; row-gap: 1.2rem; }.learning-timeline p { font-size: .72rem; } }
+
+/* Night Ops palette + mobile performance pass */
+:root { --bg: #05070b; --panel: #0b1118; --line: rgba(156, 188, 205, .15); --muted: #7f919d; --text: #edf6f4; --cyan: #83f6d5; --violet: #a997ff; --green: #b9f27d; --amber: #f2d477; --danger: #ff7886; }
+.site-shell { background: radial-gradient(circle at 78% 10%, rgba(89, 69, 172, .13), transparent 28rem), radial-gradient(circle at 12% 55%, rgba(41, 121, 108, .08), transparent 24rem), var(--bg); }
+.audio-toggle { background: rgba(131,246,213,.05); border: 1px solid rgba(131,246,213,.28); color: var(--cyan); cursor: pointer; font: .58rem 'DM Mono', monospace; letter-spacing: .1em; margin-left: auto; margin-right: 1.3rem; padding: .55rem .7rem; }.audio-toggle:hover { background: rgba(131,246,213,.14); }
+.hero-kicker, .status-pill i, .availability i, .radar-dot, .radar-sweep:after { filter: drop-shadow(0 0 .5rem var(--cyan)); }.project-card.violet:hover { border-color: var(--violet); }.project-card.green:hover { border-color: var(--green); }.danger-text { color: var(--danger) !important; }.warning-text { color: var(--amber) !important; }
+@media (max-width: 650px) {
+  .audio-toggle { font-size: .5rem; margin-right: .7rem; padding: .45rem .45rem; }
+  .noise { opacity: .018; }
+  .section { content-visibility: auto; contain-intrinsic-size: 700px; }
+  .hero-grid { animation: none; opacity: .2; transform: perspective(30rem) rotateX(56deg) scale(1.25) translateY(10rem); }
+  .hero-scanline, .cursor-orb { display: none; }
+  .hero-terminal, .cyber-radar { animation: none; }
+  .radar-sweep { animation-duration: 5s; }
+  .shield-3d, .cube-3d { animation: none; }
+  .cube-3d { transform: rotateX(-16deg) rotateY(32deg); }
+  .digital-rain { animation: none; font-size: .8rem; opacity: .5; }
+  .project-card { transform: none !important; }
+  .lab-panel:hover { border-color: var(--line); }
+}

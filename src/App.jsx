@@ -56,6 +56,29 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
+function playCyberSound(kind = "click") {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  const context = new AudioContext();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const settings = {
+    click: [360, 0.045, "square"],
+    success: [620, 0.12, "sine"],
+    alert: [180, 0.16, "sawtooth"],
+  }[kind] || [360, 0.045, "square"];
+  oscillator.type = settings[2];
+  oscillator.frequency.setValueAtTime(settings[0], context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(settings[0] * 1.45, context.currentTime + settings[1]);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + settings[1]);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + settings[1] + 0.02);
+  oscillator.addEventListener("ended", () => context.close(), { once: true });
+}
+
 function BootSequence({ onComplete }) {
   const [lineCount, setLineCount] = useState(0);
   const bootLines = [
@@ -114,7 +137,7 @@ function HudCursor({ label }) {
   return <div className={`hud-cursor ${label ? "is-active" : ""}`} style={{ left: position.x, top: position.y }} aria-hidden="true"><span className="hud-crosshair" /><small>{label || "SCANNING"}</small><b>X {String(Math.max(0, Math.round(position.x))).padStart(3, "0")} / Y {String(Math.max(0, Math.round(position.y))).padStart(3, "0")}</b></div>;
 }
 
-function CyberLab() {
+function CyberLab({ sound }) {
   const [attackRunning, setAttackRunning] = useState(false);
   const [scanRunning, setScanRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
@@ -123,11 +146,13 @@ function CyberLab() {
 
   const runAttack = () => {
     setAttackRunning(false);
+    sound("alert");
     window.setTimeout(() => setAttackRunning(true), 30);
     window.setTimeout(() => setAttackRunning(false), 2600);
   };
 
   const runScan = () => {
+    sound("success");
     setScanRunning(true);
     window.setTimeout(() => setScanRunning(false), 2600);
   };
@@ -143,6 +168,7 @@ function CyberLab() {
       contact: "signal open // email channel ready",
       clear: "",
     };
+    sound(responses[command] ? "click" : "alert");
     setTerminalOutput(responses[command] ?? `command not found: ${command || "_"}`);
     setTerminalInput("");
   };
@@ -237,7 +263,9 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [bootComplete, setBootComplete] = useState(false);
   const [hudLabel, setHudLabel] = useState("");
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const finishBoot = useCallback(() => setBootComplete(true), []);
+  const sound = useCallback((kind) => { if (soundEnabled) playCyberSound(kind); }, [soundEnabled]);
   const [typed, setTyped] = useState(0);
   const phrases = useMemo(
     () => ["learning the craft", "securing the surface", "building with intent"],
@@ -259,12 +287,13 @@ function App() {
       <div className="cursor-orb" aria-hidden="true" />
 
       <header className="topbar">
-        <button className="brand" onClick={() => scrollToSection("home")} aria-label="Back to top">
+        <button className="brand" onClick={() => { sound("click"); scrollToSection("home"); }} aria-label="Back to top">
           <span className="brand-mark">&lt;/&gt;</span>
           <span>Tm<span>Termin</span></span>
         </button>
         <div className="availability"><i /> AVAILABLE TO LEARN / BUILD</div>
-        <button className="menu-toggle" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>
+        <button className="audio-toggle" onClick={() => { setSoundEnabled((enabled) => !enabled); if (!soundEnabled) playCyberSound("success"); }} aria-pressed={soundEnabled}>{soundEnabled ? "SOUND / ON" : "SOUND / OFF"}</button>
+        <button className="menu-toggle" onClick={() => { sound("click"); setMenuOpen((open) => !open); }} aria-expanded={menuOpen}>
           {menuOpen ? "CLOSE" : "MENU"}<span className="menu-lines" />
         </button>
       </header>
@@ -294,8 +323,8 @@ function App() {
             </h1>
             <p className="hero-copy">I&apos;m TmTermin — a first-year cybersecurity student learning how systems work, how they break, and how to build better ones.</p>
             <div className="hero-actions">
-              <button className="button button-primary" onClick={() => scrollToSection("projects")}>Explore projects <span>↘</span></button>
-              <button className="text-button" onClick={() => scrollToSection("contact")}>Let&apos;s connect <span>↗</span></button>
+              <button className="button button-primary" onClick={() => { sound("click"); scrollToSection("projects"); }}>Explore projects <span>↘</span></button>
+              <button className="text-button" onClick={() => { sound("click"); scrollToSection("contact"); }}>Let&apos;s connect <span>↗</span></button>
             </div>
           </div>
 
@@ -357,7 +386,7 @@ function App() {
           <section id="lab" className="section-inner">
             <div className="section-heading"><div className="section-index">04 / CYBER LAB</div><div><p className="eyebrow">INTERACTIVE SECURITY SYSTEMS</p><h2>Explore the <span>surface.</span></h2></div><span className="heading-count">08 MODULES</span></div>
             <p className="section-intro lab-intro">A safe, visual playground for understanding networks, defense layers, and the tools I am learning.</p>
-            <CyberLab />
+            <CyberLab sound={sound} />
           </section>
         </Reveal>
 
