@@ -1,20 +1,5 @@
-*{
-    margin: 0;
-    padding: 0;
-}
-
-@media (max-width: 700px) {
-    .ac2-particles .ac2-particle:nth-child(n + 17),
-    .intro-am-particles .intro-am-particle:nth-child(n + 18) {
-        display: none;
-    }
-
-    .ac2-image-aura,
-    .about-glow,
-    .svx-glow,
-    .ct7-glow,
-    .expx-glow {
-        opacity: .7;
-        filter: blur(18px);
-    }
-}
+* { margin: 0; padding: 0; }
+html { background: #07090c; }
+body { margin: 0; min-width: 320px; }
+::selection { background: #80f5d2; color: #07100e; }
+:focus-visible { outline: 2px solid #80f5d2; outline-offset: 4px; }
